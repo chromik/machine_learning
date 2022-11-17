@@ -71,20 +71,17 @@ class NeuralNetwork(object):
         return layer_input
 
     def backward_propagate_learning(self, testing_data, expected_results, output):
-        error = expected_results - output
         layer_output = output
-        for layer_index in reversed(range(self.layers_count - 1)):
+        error = expected_results - output
+
+        for layer_index in reversed(range(1, self.layers_count - 1)):  # adjust hidden layers
             delta_adjustment = error * self.sigmoid_derivative(layer_output)  # compute weight adjustment
-
-            if layer_index == 0:
-                # first layer's input are testing data
-                layer_output = testing_data
-            else:
-                # previous layer is input of actual layer
-                layer_output = self.weighted_inputs[layer_index - 1]
-                error = delta_adjustment.dot(self.weights[layer_index].T)
-
+            error = delta_adjustment.dot(self.weights[layer_index].T)
+            layer_output = self.weighted_inputs[layer_index - 1]
             self.weights[layer_index] += layer_output.T.dot(delta_adjustment)
+
+        # adjust input layer
+        self.weights[0] += testing_data.T.dot(error * self.sigmoid_derivative(layer_output))
 
     @staticmethod
     def sigmoid(s):
@@ -99,10 +96,10 @@ def learn(testing_data, testing_data_results):
     assert testing_data.shape[0] == testing_data_results.shape[0]
     inputs_count = testing_data.shape[1]
     outputs_count = testing_data_results.shape[1]
-    neural_network = NeuralNetwork([inputs_count, 6, 7, outputs_count])
+    neural_network = NeuralNetwork([inputs_count, 8, 6, 7, outputs_count])
     print("====== LEARNING: ======")
-    for i in range(1_000):  # trains neural network 1000 times
-        if i % 100 == 0:
+    for i in range(10_000):  # trains neural network 1000 times
+        if i % 1000 == 0:
             loss = np.mean(
                 np.square(testing_data_results - neural_network.feed_forward(testing_data)))
             print(

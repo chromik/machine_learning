@@ -1,42 +1,5 @@
 import numpy as np
 
-learning_dataset_inputs = np.array(([1, 1, 1, 1, 1, 1, 0],
-                                    [0, 1, 1, 0, 0, 0, 0],
-                                    [1, 1, 0, 1, 1, 0, 1],
-                                    [1, 1, 1, 1, 0, 0, 1],
-                                    [0, 1, 1, 0, 0, 1, 1],
-                                    [1, 0, 1, 1, 0, 1, 1],
-                                    [1, 0, 1, 1, 1, 1, 1],
-                                    [1, 1, 1, 0, 0, 0, 0],
-                                    [1, 1, 1, 1, 1, 1, 1],
-                                    [1, 1, 1, 1, 0, 1, 1],
-                                    [1, 1, 1, 0, 1, 1, 1],
-                                    [0, 0, 1, 1, 1, 1, 1],
-                                    [1, 0, 0, 1, 1, 1, 0],
-                                    [0, 1, 1, 1, 1, 0, 1],
-                                    [1, 0, 0, 1, 1, 1, 1],
-                                    [1, 0, 0, 0, 1, 1, 1]), dtype=float)
-
-learning_dataset_expected_results = np.array(([0, 0, 0, 0],
-                                              [0, 0, 0, 1],
-                                              [0, 0, 1, 0],
-                                              [0, 0, 1, 1],
-                                              [0, 1, 0, 0],
-                                              [0, 1, 0, 1],
-                                              [0, 1, 1, 0],
-                                              [0, 1, 1, 1],
-                                              [1, 0, 0, 0],
-                                              [1, 0, 0, 1],
-                                              [1, 0, 1, 0],
-                                              [1, 0, 1, 1],
-                                              [1, 1, 0, 0],
-                                              [1, 1, 0, 1],
-                                              [1, 1, 1, 0],
-                                              [1, 1, 1, 1]), dtype=float)
-
-testing_dataset_inputs = learning_dataset_inputs
-testing_dataset_expected_results = learning_dataset_expected_results
-
 
 class NeuralNetwork(object):
     def __init__(self, layers_sizes):
@@ -92,30 +55,44 @@ class NeuralNetwork(object):
         return s * (1 - s)
 
 
-def learn(testing_data, testing_data_results):
-    assert testing_data.shape[0] == testing_data_results.shape[0]
-    inputs_count = testing_data.shape[1]
-    outputs_count = testing_data_results.shape[1]
-    neural_network = NeuralNetwork([inputs_count, 8, 6, 7, outputs_count])
+def create_testing_data():
+    # generate 100 x 5-bit (5 inputs with 0 or 1 value) created 100x with random value
+    testing_data = np.random.randint(0, 2, (100, 5))
+    results = []
+    for row in testing_data:
+        # converts 5-bit binary value into decimal format abd scale
+        results.append((row[0] * 16 + row[1] * 8 + row[2] * 4 + row[3] * 2 + row[4]) / 31)
+    testing_data_results = np.array([results]).T  # transpose matrix to have each result on the new row
+    return testing_data, testing_data_results
+
+
+def learn(network, iterations=1_000):
     print("====== LEARNING: ======")
-    for i in range(10_000):  # trains neural network 1000 times
+    for i in range(iterations):
+        learning_data, learning_data_results = create_testing_data()
+
         if i % 1000 == 0:
             loss = np.mean(
-                np.square(testing_data_results - neural_network.feed_forward(testing_data)))
+                np.square(learning_data_results - network.feed_forward(learning_data)))
             print(
-                f"Success ratio: {str(100 - loss * 100)} %")
-        neural_network.train(testing_data, testing_data_results)
+                f"Success ratio: {str(100 - loss * 100)} %  ({i}/{iterations})")
+        network.train(learning_data, learning_data_results)
     print("\n")
 
+
+def test(network):
     print("====== TESTING: ======")
-    feed_forward = neural_network.feed_forward(testing_dataset_inputs)
-    loss = np.mean(np.square(testing_data_results - feed_forward))
-    print("Input: " + str(testing_dataset_inputs))
-    print("Predicted Output: " + str(feed_forward))
-    print("Expected Output: " + str(testing_data_results))
+    testing_data, testing_data_results = create_testing_data()
+    raw_output = network.feed_forward(testing_data)
+    loss = np.mean(np.square(testing_data_results - raw_output))
+    print("Input: " + str(testing_data))
+    print("Predicted Output: " + str(raw_output * 31))  # scale output back
+    print("Expected Output: " + str(testing_data_results * 31))  # scale output back
     print(f"Success ratio: {str(100 - loss * 100)} %")
     print("\n")
-
+    #np.isclose(raw_output, testing_data_results[:, None], atol=0.6)
 
 if __name__ == '__main__':
-    learn(learning_dataset_inputs, learning_dataset_expected_results)
+    neural_network = NeuralNetwork([5, 7, 6, 1])
+    learn(neural_network, 100_000)
+    test(neural_network)

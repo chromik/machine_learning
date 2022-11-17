@@ -57,7 +57,7 @@ class NeuralNetwork(object):
 
 def create_testing_data():
     # generate 100 x 5-bit (5 inputs with 0 or 1 value) created 100x with random value
-    testing_data = np.random.randint(0, 2, (100, 5))
+    testing_data = np.random.randint(0, 2, (200, 5))
     results = []
     for row in testing_data:
         # converts 5-bit binary value into decimal format abd scale
@@ -72,10 +72,10 @@ def learn(network, iterations=1_000):
         learning_data, learning_data_results = create_testing_data()
 
         if i % 1000 == 0:
-            loss = np.mean(
-                np.square(learning_data_results - network.feed_forward(learning_data)))
-            print(
-                f"Success ratio: {str(100 - loss * 100)} %  ({i}/{iterations})")
+            loss = np.mean(np.square(learning_data_results - network.feed_forward(learning_data)))
+            print(f"Success ratio: {str(100 - (loss * 31) * 100)} %  ({i}/{iterations})")
+            print("\n")
+
         network.train(learning_data, learning_data_results)
     print("\n")
 
@@ -88,11 +88,11 @@ def test(network):
     print("Input: " + str(testing_data))
     print("Predicted Output: " + str(raw_output * 31))  # scale output back
     print("Expected Output: " + str(testing_data_results * 31))  # scale output back
-    print(f"Success ratio: {str(100 - loss * 100)} %")
+    print(f"Success ratio: {str(100 - (loss * 31) * 100)} %")
     print("\n")
-    #np.isclose(raw_output, testing_data_results[:, None], atol=0.6)
+
 
 if __name__ == '__main__':
-    neural_network = NeuralNetwork([5, 7, 6, 1])
-    learn(neural_network, 100_000)
+    neural_network = NeuralNetwork([5, 8, 6, 1])
+    learn(neural_network, 200_000)
     test(neural_network)

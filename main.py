@@ -84,7 +84,7 @@ def test(network):
     print("====== TESTING: ======")
     testing_data, testing_data_results = create_testing_data()
     raw_output = network.feed_forward(testing_data)
-    loss = np.mean(np.square(testing_data_results - raw_output))
+    loss = 1/2 * ((testing_data_results - raw_output) ** 2)
     print("Input: " + str(testing_data))
     print("Predicted Output: " + str(raw_output * 31))  # scale output back
     print("Expected Output: " + str(testing_data_results * 31))  # scale output back
